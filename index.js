@@ -20,65 +20,86 @@ app.set("view engine", "ejs");
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
+function replaceCommasAndSpaces(inputString) {
+  return inputString.replace(/[, ]+/g, '+');
+}
+// Example usage
+// const originalString = "Chaitanyapuri, Hyderabad";
+// const modifiedString = replaceCommasAndSpaces(originalString);
+// console.log(modifiedString);
+
 
 app.get("/", async(req, res) => {
   res.render("index.ejs",{content:"Waiting for input..."});
 });
 
 app.post("/get-uv-details", async(req, res) => {
-  const lati = req.body.latitude;
-  const long = req.body.longitude;
-  const alt=500;
-  const dt="";
-  console.log(lati);
-  console.log(long);
-  console.log(alt);
-  console.log(dt);
-  const API_URL = `https://api.openuv.io/api/v1/uv?lat=${lati}&lng=${long}&alt=${alt}&dt=${dt}`;
+  // const lati = req.body.latitude;
+  // const long = req.body.longitude;
+  const loc = replaceCommasAndSpaces(req.body.location);
+  const originaLoc = req.body.location;
+  console.log(loc);
 
-  const API_URL2 = `https://api.openuv.io/api/v1/forecast?lat=${lati}&lng=${long}&alt=${alt}&dt=${dt}`;
+  const DM_API_URL1 = `https://api-v2.distancematrix.ai/maps/api/geocode/json?address=${loc}&key=mSnda8WyU3EzinJuNQrKzdhpxH4EyYC9HfwYKdC603hOpKH0MxAHsIcdhgkkRJFS`
+  // const UV_API_URL1 = `https://api.openuv.io/api/v1/uv?lat=${lati}&lng=${long}&alt=${alt}&dt=${dt}`;
+
+  const UNSP_API_URL = `https://api.unsplash.com/search/photos/?client_id=RcluQ-upDdw5BRwGdXGEJr3gpx92d2Z6hetV_KHccbI&query=${loc}&count=1`
+  
 
   try{
-    const api_data = await axios.get(API_URL,config);
-
-    const api_data2 = await axios.get(API_URL2,config);
-
-
-    const uvMax = api_data.data.result.uv_max;
-
+    // const uv_api_data1 = await axios.get(UV_API_URL1,config);
+    // const uvMax = uv_api_data1.data.result.uv_max;
+    const dm_api_response = await axios.get(DM_API_URL1);
+    const unsp_api_response = await axios.get(UNSP_API_URL);
+    // console.log("hi");
+    
     // api_data = JSON.stringify(api_data.data);
-
     // var temp = 0;
-
+    
     // api_data.data.result.forEach(item => {
-    //   console.log(item.uv);
-    // });
+      //   console.log(item.uv);
+      // });
+      
+      // const dm_api_data = JSON.parse(dm_api_response);
+      const lati = dm_api_response.data.result[0].geometry.location.lat;
+      const long = dm_api_response.data.result[0].geometry.location.lng;
+      const unsp_api_data = unsp_api_response.data.results[0].urls.regular;
+      // console.log(unsp_api_data);
 
-    let uValues = api_data2.data.result.map(item => item.uv);
+      // console.log("hello");
+      
+      const alt=500;
+      const dt="";
+      const UV_API_URL2 = `https://api.openuv.io/api/v1/forecast?lat=${lati}&lng=${long}&alt=${alt}&dt=${dt}`;
+      const uv_api_data2 = await axios.get(UV_API_URL2,config);
 
+    console.log(loc)
+    console.log(lati);
+    console.log(long);
+    console.log(alt);
+    console.log(dt);
+
+    let uValues = uv_api_data2.data.result.map(item => item.uv);
     let uvValuesLen = uValues.length;
     let sum = 0;
-
     // console.log(uValues)
-
     for(let i=0;i<uvValuesLen;i++){
       sum+=uValues[i];
     }
 
-    const uvAvg = sum/uvValuesLen;
+    const uvAvg = (sum / uvValuesLen).toFixed(2);
 
     // console.log(sum);
     console.log("Average UV index is:",uvAvg);
 
-    // console.log("hello");
-    console.log("Today's maximum UV will be: ",uvMax);
-    // console.log("world");
+    // console.log("Today's maximum UV will be: ",uvMax);
+    
 
     if(uvAvg > 3){
-      res.render("index.ejs",{content:`Today's UV Index is high Avg:${uvAvg} . Please apply sunscreen.`});
+      res.render("index.ejs",{content:`Today's UV Index in ${originaLoc} is high; Averging at:${uvAvg}. \n Please apply sunscreen.`,imageUrl: unsp_api_data});
     }
     else{
-      res.render("index.ejs",{content:`Today's UV Index is low Avg:${uvAvg}. No need to apply sunscreen.`});
+      res.render("index.ejs",{content:`Today's UV Index in ${originaLoc} is low; Averging at:${uvAvg}. \n No need to apply sunscreen.`,imageUrl: unsp_api_data});
     }
 
   }
