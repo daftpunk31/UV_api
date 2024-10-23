@@ -38,7 +38,7 @@ app.post("/get-uv-details", async(req, res) => {
   // const long = req.body.longitude;
   const loc = replaceCommasAndSpaces(req.body.location);
   const originaLoc = req.body.location;
-  console.log(loc);
+  // console.log(loc);
 
   const DM_API_URL1 = `https://api-v2.distancematrix.ai/maps/api/geocode/json?address=${loc}&key=mSnda8WyU3EzinJuNQrKzdhpxH4EyYC9HfwYKdC603hOpKH0MxAHsIcdhgkkRJFS`
   // const UV_API_URL1 = `https://api.openuv.io/api/v1/uv?lat=${lati}&lng=${long}&alt=${alt}&dt=${dt}`;
@@ -93,18 +93,10 @@ app.post("/get-uv-details", async(req, res) => {
     console.log("Average UV index is:",uvAvg);
 
     // console.log("Today's maximum UV will be: ",uvMax);
-    
-
-    if(uvAvg > 3){
-      res.render("index.ejs",{content:`Today's UV Index in ${originaLoc} is high; Averging at:${uvAvg}. \n Please apply sunscreen.`,imageUrl: unsp_api_data});
-    }
-    else{
-      res.render("index.ejs",{content:`Today's UV Index in ${originaLoc} is low; Averging at:${uvAvg}. \n No need to apply sunscreen.`,imageUrl: unsp_api_data});
-    }
-
+    res.render("index.ejs",{location: originaLoc,uvIndex:uvAvg,imageUrl: unsp_api_data});
   }
   catch(error){
-    console.log(error.response);
+    console.log(error);
   }
 });
 
