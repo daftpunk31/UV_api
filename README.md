@@ -22,4 +22,4 @@ To run: nodemon index.js
 
 Open the browser and type "localhost:3000"
 
-Enter the latitude and longitude values and voila!
+Enter the State/City/Town name and voila!
